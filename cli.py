@@ -159,7 +159,7 @@ def main(argv):
         generate_channels()
     elif arg1 == "db_setup":
         print("- enter mysql shell: mysql -p")
-        print("- dump database (if exists): DROP DATABASE kkdb;")
+        print("- drop database (if exists): DROP DATABASE kkdb;")
         print("- create database: CREATE DATABASE kkdb;")
         print("- exit mysql shell: exit")
         print('- import sql: mysql -p kkdb < "independent study.sql"')
