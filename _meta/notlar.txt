@@ -22,10 +22,7 @@ design choices:
 - "s_list" yerine "_list" kullan (mesela "faculties_list" değil, "faculty_list" kullan)
 
 
-komutlar:
-sudo systemctl start apache2
-sudo systemctl start mysql
+gözümüzden kaçan duyuru sayfaları var:
+https://www.karatay.edu.tr/OgrenciIsleri/Duyurular.html
 
-CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci
-CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci
 
