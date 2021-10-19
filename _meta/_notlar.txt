@@ -1,0 +1,31 @@
+yapılacaklar:
+- sunucuya yükle
+
+
+yapılabilecekler:
+- custom kb item sıralaması (türkçe harflere göre sıralama vb.)
+- her şeyi kaydetmek
+- decorator'lar (veritabanı kullanan fonk.lar, giriş yapmayı gerektiren viewler vb.)
+- test için üni duyuru sayfasının klonu
+- anlaşılmayan mesajların kaydedilmesi ve yöneticilere gösterilmesi
+- yönetim paneli: adamakıllı kullanıcı hesapları (veritabanında saklanan, şifresi değiştirilebilen)
+- kanal aboneliklerinde nötr durum (kullanıcı bir kanal için abonelik durumunu elle değiştirmemişse bu durumu yönetim panelinden yönetebilmek, her kanal için varsayılan abonelik durumu belirlemek gibi)
++ mesajı birden fazla kanala gönderirken her kişinin aynı mesajı sadece bir kere almasını sağlamak
+- kullanıcı-yönetici çakışmaları (mesela kullanıcı /ayarla yaparken yöneticinin kanalları düzenlemesi)
+- birbirine çok yakın zamanlarda gönderilen mesajları yok saymak
+- _meta yerine data, txt yerine csv
+- departments.code boş string yerine null olsun
+- config_prod.py ve secrets.py
+
+
+design choices:
+- "s_list" yerine "_list" kullan (mesela "faculties_list" değil, "faculty_list" kullan)
+
+
+komutlar:
+sudo systemctl start apache2
+sudo systemctl start mysql
+
+CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci
+CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci
+
