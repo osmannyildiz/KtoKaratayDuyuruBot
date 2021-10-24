@@ -1,28 +1,28 @@
 from tgbot import BaseBot
 from tgbots.kto_karatay_duyuru_bot.message_texts import message_texts as mt
-from tgbots.kto_karatay_duyuru_bot.db_helpers import (
-    get_user, set_user, create_user, delete_user, user_exists,
-    get_faculties, get_faculty_by_name,
-    get_departments_by_faculty_id, get_department_by_name,
-    get_channel_by_name, get_channel_by_faculty_id, get_channel_by_department_id,
-    create_subscription, toggle_subscription_alt
-)
+from tgbots.kto_karatay_duyuru_bot.db import dbsvc
 from tgbots.kto_karatay_duyuru_bot.helpers import (
     create_subscriptions_to_special_channels,
     build_custom_kb_of_faculties, build_custom_kb_of_departments, build_custom_kb_for_ayarla,
     build_custom_kb_for_curr_state,
-    sanitize_and_validate_user_name
+    sanitize_and_validate_user_name,
+    toggle_subscription
 )
+from tgbots.kto_karatay_duyuru_bot.config import bot_config
 from pprint import pprint
 
 
 class Bot(BaseBot):
+    def __init__(self, config, dbconn):
+        super().__init__(config)
+        self.dbconn = dbconn
+
     def send_msg(self, chat_id, text, **kwargs):
         ok, r = self.api.send_message(chat_id, text, **kwargs)
         if not ok:
             if r["description"] == "Forbidden: bot was blocked by the user":
                 # Kullanıcı botu silmişse sen de kullanıcıyı sil
-                delete_user(self, chat_id)
+                dbsvc["users"].delete("id=%s", [chat_id])
             else:
                 raise Exception(r)
         return ok, r
@@ -31,47 +31,42 @@ class Bot(BaseBot):
         if msg := update.get("message"):
             chat_id = msg["chat"]["id"]
             text = msg.get("text")
-            print(chat_id)
-            print(text)
+            print(f"{chat_id}:\n{text}\n")
             msg_id = msg.get("message_id")
             if text:
 
                 if text.startswith("/"):
                     if text == "/start":
-                        if user_exists(self, chat_id):
+                        if user := dbsvc["users"].getone("id=%s", [chat_id]):
                             # Kullanıcı zaten varsa
-                            user_state = get_user(self, chat_id, "state")[0]
-
-                            if user_state == 0:  # Ama bir terslik (mesela kodun *a* satırında göçmesi) sonucu state 1 olamamışsa:
+                            if user["state"] == 0:  # Ama bir terslik (mesela kodun *a* satırında göçmesi) sonucu state 1 olamamışsa:
                                 # Tanış ama kullanıcıyı yeniden oluşturmaya çalışma!
                                 self.send_msg(chat_id, mt.ask_name(), reply_markup=self.api.build_remove_keyboard())
-                                set_user(self, chat_id, "state", 1)
-                            elif user_state == 6:
+                                dbsvc["users"].update_column_with_value("state", 1, "id=%s", [user["id"]])
+                            elif user["state"] == 6:
                                 # Eğer kullanıcı /sifirla'ya cevap olarak /start girmişse vazgeçti say
                                 self.send_msg(chat_id, mt.user_canceled_sifirla(), reply_markup=self.api.build_remove_keyboard())
-                                set_user(self, chat_id, "state", 4)
-                            elif user_state < 4:
+                                dbsvc["users"].update_column_with_value("state", 4, "id=%s", [user["id"]])
+                            elif user["state"] < 4:
                                 # Tanışma zaten devam ediyor
-                                custom_kb = build_custom_kb_for_curr_state(self, chat_id, user_state=user_state)
+                                custom_kb = build_custom_kb_for_curr_state(self, chat_id, user_state=user["state"])
                                 self.send_msg(chat_id, mt.meeting_already_ongoing(), reply_markup=custom_kb)
                             else:
                                 # Zaten tanışmıştık
                                 self.send_msg(chat_id, mt.already_met())
                         else:
-                            create_user(self, chat_id)
+                            dbsvc["users"].insert(chat_id)
                             self.send_msg(chat_id, mt.ask_name(), reply_markup=self.api.build_remove_keyboard())  # *a*
-                            set_user(self, chat_id, "state", 1)
+                            dbsvc["users"].update_column_with_value("state", 1, "id=%s", [chat_id])
                     else:
-                        if user_exists(self, chat_id):
-                            user_state = get_user(self, chat_id, "state")[0]
-
-                            if user_state == 6:
+                        if user := dbsvc["users"].getone("id=%s", [chat_id]):
+                            if user["state"] == 6:
                                 # Eğer kullanıcı /sifirla'ya cevap olarak bir komut girmişse vazgeçti say
                                 self.send_msg(chat_id, mt.user_canceled_sifirla(), reply_markup=self.api.build_remove_keyboard())
-                                set_user(self, chat_id, "state", 4)
-                            elif user_state != 4:
+                                dbsvc["users"].update_column_with_value("state", 4, "id=%s", [user["id"]])
+                            elif user["state"] != 4:
                                 # Diğer komutları işleme!, önce mevcut olanı tamamla
-                                custom_kb = build_custom_kb_for_curr_state(self, chat_id, user_state=user_state)
+                                custom_kb = build_custom_kb_for_curr_state(self, chat_id, user_state=user["state"])
                                 self.send_msg(chat_id, mt.finish_cmd_first(), reply_markup=custom_kb)
                             else:
 
@@ -80,12 +75,12 @@ class Bot(BaseBot):
                                     custom_kb = build_custom_kb_for_ayarla(self, chat_id)
                                     ok, sent_msg = self.send_msg(chat_id, mt.ayarla_waiting(), reply_markup=custom_kb)
                                     if ok:
-                                        set_user(self, chat_id, "bot_last_msg_id", sent_msg["result"]["message_id"])
-                                        set_user(self, chat_id, "state", 5)
+                                        dbsvc["users"].update_column_with_value("bot_last_msg_id", sent_msg["result"]["message_id"], "id=%s", [user["id"]])
+                                        dbsvc["users"].update_column_with_value("state", 5, "id=%s", [user["id"]])
 
                                 elif text == "/sifirla":
                                     self.send_msg(chat_id, mt.sifirla_start(), reply_markup=self.api.build_remove_keyboard())
-                                    set_user(self, chat_id, "state", 6)
+                                    dbsvc["users"].update_column_with_value("state", 6, "id=%s", [user["id"]])
 
                                 else:
                                     # Böyle bir komut yok
@@ -94,89 +89,80 @@ class Bot(BaseBot):
                             # Kullanıcı veritabanında yok
                             self.send_msg(chat_id, mt.not_met(), reply_markup=self.api.build_remove_keyboard())
                 else:
-                    if user_exists(self, chat_id):
-                        user_state = get_user(self, chat_id, "state")[0]
-
-                        if user_state == 1:
+                    if user := dbsvc["users"].getone("id=%s", [chat_id]):
+                        if user["state"] == 1:
                             # Kullanıcı ismini yazdı
                             user_name = sanitize_and_validate_user_name(text)
                             if user_name != None:
-                                set_user(self, chat_id, "name", user_name)
+                                dbsvc["users"].update_column_with_value("name", user_name, "id=%s", [user["id"]])
                                 custom_kb = build_custom_kb_of_faculties(self)
                                 self.send_msg(chat_id, mt.ask_faculty(), reply_markup=custom_kb)
-                                set_user(self, chat_id, "state", 2)
+                                dbsvc["users"].update_column_with_value("state", 2, "id=%s", [user["id"]])
                             else:
                                 # İsim uygun değil
                                 self.send_msg(chat_id, mt.invalid_user_name(), reply_markup=self.api.build_remove_keyboard())
 
-                        elif user_state == 2:
+                        elif user["state"] == 2:
                             # Kullanıcı fakülte seçti
-                            faculty_row = get_faculty_by_name(self, text, "id")
-                            if faculty_row:
-                                faculty_id = faculty_row[0]
-                                set_user(self, chat_id, "faculty_id", faculty_id)
-                                custom_kb = build_custom_kb_of_departments(self, faculty_id)
+                            if faculty := dbsvc["faculties"].getone("name=%s", [text]):
+                                dbsvc["users"].update_column_with_value("faculty_id", faculty["id"], "id=%s", [user["id"]])
+                                custom_kb = build_custom_kb_of_departments(self, faculty["id"])
                                 self.send_msg(chat_id, mt.ask_department(), reply_markup=custom_kb)
-                                set_user(self, chat_id, "state", 3)
+                                dbsvc["users"].update_column_with_value("state", 3, "id=%s", [user["id"]])
                             else:
                                 # Özel klavyeden seçmedi (böyle bir fakülte yok)
                                 custom_kb = build_custom_kb_of_faculties(self)
                                 self.send_msg(chat_id, mt.invalid_response_use_keyboard(), reply_markup=custom_kb)
 
-                        elif user_state == 3:
+                        elif user["state"] == 3:
                             # Kullanıcı bölüm seçti
-                            department_row = get_department_by_name(self, text, "id")
-                            if department_row:
-                                department_id = department_row[0]
-                                set_user(self, chat_id, "department_id", department_id)
-                                faculty_id = get_user(self, chat_id, "faculty_id")[0]
-                                create_subscription(self, chat_id, get_channel_by_faculty_id(self, faculty_id, "id")[0])
-                                create_subscription(self, chat_id, get_channel_by_department_id(self, department_id, "id")[0])
-                                create_subscriptions_to_special_channels(self, chat_id)
-                                user_name = get_user(self, chat_id, "name")[0]
-                                self.send_msg(chat_id, mt.meeting_done(user_name), reply_markup=self.api.build_remove_keyboard())
-                                set_user(self, chat_id, "state", 4)
+                            if department := dbsvc["departments"].getone("name=%s", [text]):
+                                dbsvc["users"].update_column_with_value("department_id", department["id"], "id=%s", [user["id"]])
+                                faculty_channel = dbsvc["channels"].getone("item_type=%s AND item_id=%s", [1, user["faculty_id"]])
+                                department_channel = dbsvc["channels"].getone("item_type=%s AND item_id=%s", [2, department["id"]])
+                                dbsvc["subscriptions"].insert(user["id"], faculty_channel["id"])
+                                dbsvc["subscriptions"].insert(user["id"], department_channel["id"])
+                                create_subscriptions_to_special_channels(dbsvc, chat_id)
+                                self.send_msg(chat_id, mt.meeting_done(user["name"]), reply_markup=self.api.build_remove_keyboard())
+                                dbsvc["users"].update_column_with_value("state", 4, "id=%s", [user["id"]])
                             else:
                                 # Özel klavyeden seçmedi (böyle bir bölüm yok)
-                                faculty_id = get_user(self, chat_id, "faculty_id")[0]
-                                department_list = [row[0] for row in get_departments_by_faculty_id(self, faculty_id, "name")]
+                                department_list = [department["name"] for department in dbsvc["departments"].get("faculty_id=%s", user["faculty_id"])]
                                 department_list.sort()
                                 custom_kb = self.api.build_vertical_custom_keyboard(department_list, one_time=True)
                                 self.send_msg(chat_id, mt.invalid_response_use_keyboard(), reply_markup=custom_kb)
 
-                        elif user_state == 5:
+                        elif user["state"] == 5:
                             # Kullanıcı ayarlamalar yapıyor
                             if text.strip().lower() in [mt.ayarla_done_button().lower(), "tamamla"]:
                                 # Tamamla
-                                self.api.delete_message(chat_id, get_user(self, chat_id, "bot_last_msg_id")[0])
+                                self.api.delete_message(chat_id, user["bot_last_msg_id"])
                                 self.send_msg(chat_id, mt.ayarla_done(), reply_markup=self.api.build_remove_keyboard())
-                                set_user(self, chat_id, "state", 4)
+                                dbsvc["users"].update_column_with_value("state", 4, "id=%s", [user["id"]])
                             else:
                                 # Kanal aboneliğini aç/kapat
-                                channel_row = get_channel_by_name(self, text[:-2], "id")
-                                if channel_row:
-                                    channel_id = channel_row[0]
-                                    toggle_subscription_alt(self, chat_id, channel_id)
+                                if channel := dbsvc["channels"].getone("name=%s", [text[:-2]]):
+                                    toggle_subscription(dbsvc, user["id"], channel["id"])
                                 # (Aşağıdaki 3 satır iki durumda da ortak, o yüzden if'i ikiye böldüm)
                                 custom_kb = build_custom_kb_for_ayarla(self, chat_id)
                                 self.api.delete_message(chat_id, msg_id)  # Kullanıcının mesajını (mesela "Genel Duyurular") sil
-                                self.api.delete_message(chat_id, get_user(self, chat_id, "bot_last_msg_id")[0])  # Botun mesajını (mesela "...") sil
-                                if channel_row:
+                                self.api.delete_message(chat_id, user["bot_last_msg_id"])  # Botun mesajını (mesela "...") sil
+                                if channel:
                                     ok, sent_msg = self.send_msg(chat_id, mt.ayarla_waiting(), reply_markup=custom_kb)
                                 else:
                                     # Özel klavyeden seçmedi (böyle bir kanal yok)
                                     ok, sent_msg = self.send_msg(chat_id, mt.invalid_response_use_keyboard(), reply_markup=custom_kb)
                                 if ok:
-                                    set_user(self, chat_id, "bot_last_msg_id", sent_msg["result"]["message_id"])
+                                    dbsvc["users"].update_column_with_value("bot_last_msg_id", sent_msg["result"]["message_id"], "id=%s", [user["id"]])
 
-                        elif user_state == 6:
+                        elif user["state"] == 6:
                             # Kullanıcıdan sıfırlama için onay alınıyor
                             if text.strip().lower() == "onayla":
-                                delete_user(self, chat_id)
+                                dbsvc["users"].delete("id=%s", [user["id"]])
                                 self.send_msg(chat_id, mt.sifirla_done(), reply_markup=self.api.build_remove_keyboard())
                             else:
                                 self.send_msg(chat_id, mt.user_canceled_sifirla(), reply_markup=self.api.build_remove_keyboard())
-                                set_user(self, chat_id, "state", 4)
+                                dbsvc["users"].update_column_with_value("state", 4, "id=%s", [user["id"]])
 
                         else:
                             # Kullanıcıdan mesaj beklemiyorduk
@@ -188,7 +174,11 @@ class Bot(BaseBot):
             else:
                 # Beklenmedik durum: Gelen mesajda text yok
                 pprint(update)
-                self.send_msg(chat_id, mt.could_not_understand_msg())
+                self.send_msg(chat_id, mt.oops())
         else:
             # Beklenmedik durum: Gelen olay mesaj değil
             pprint(update)
+
+
+# bot = Bot(bot_config, dbconn)
+bot = Bot(bot_config, None)

@@ -1,7 +1,3 @@
-yapılacaklar:
-- sunucuya yükle
-
-
 yapılabilecekler:
 - custom kb item sıralaması (türkçe harflere göre sıralama vb.)
 - her şeyi kaydetmek
@@ -10,19 +6,32 @@ yapılabilecekler:
 - anlaşılmayan mesajların kaydedilmesi ve yöneticilere gösterilmesi
 - yönetim paneli: adamakıllı kullanıcı hesapları (veritabanında saklanan, şifresi değiştirilebilen)
 - kanal aboneliklerinde nötr durum (kullanıcı bir kanal için abonelik durumunu elle değiştirmemişse bu durumu yönetim panelinden yönetebilmek, her kanal için varsayılan abonelik durumu belirlemek gibi)
-+ mesajı birden fazla kanala gönderirken her kişinin aynı mesajı sadece bir kere almasını sağlamak
 - kullanıcı-yönetici çakışmaları (mesela kullanıcı /ayarla yaparken yöneticinin kanalları düzenlemesi)
 - birbirine çok yakın zamanlarda gönderilen mesajları yok saymak
-- _meta yerine data, txt yerine csv
 - departments.code boş string yerine null olsun
 - config_prod.py ve secrets.py
+- özel klavye için custom placeholder text
+- sticker, gif vb. atınca afallaması
+- csv'lere header satırı
++ mesajı birden fazla kanala gönderirken her kişinin aynı mesajı sadece bir kere almasını sağlamak
 
 
-design choices:
-- "s_list" yerine "_list" kullan (mesela "faculties_list" değil, "faculty_list" kullan)
+db:
+- user: id ve chat_id farklı olsun
+- get_by_id, delete_by_id
+
+
+naming:
++ "s_list" yerine "_list" kullan (mesela "faculties_list" değil, "faculty_list" kullan)
 
 
 gözümüzden kaçan duyuru sayfaları var:
 https://www.karatay.edu.tr/OgrenciIsleri/Duyurular.html
+
+
+devam eden:
++ cli csv import
++ db layer oop
+- db schema ve cli init_db
 
 
