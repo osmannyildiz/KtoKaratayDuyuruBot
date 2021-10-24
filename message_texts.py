@@ -16,7 +16,7 @@ class message_texts:
 
     @staticmethod
     def meeting_done(user_name):
-        return f"Tanıştığımıza memnun oldum, {user_name} 😊\n- Yeni bir duyuru yayınlandığında sana haber vereceğim, böylece eğlenceyi kaçırmayacaksın.\n- İlgini çekeceğini düşündüğüm duyuru kanallarını senin için aktifleştirdim.\n- Abone olduğun duyuru kanallarını görmek ve değiştirmek için istediğin zaman /ayarla yazabilirsin."
+        return f"Tanıştığımıza memnun oldum, {user_name} 😊\n- Yeni bir duyuru yayınlandığında sana haber vereceğim, böylece hiçbir haberi kaçırmayacaksın.\n- İlgini çekeceğini düşündüğüm duyuru kanallarını senin için aktifleştirdim.\n- Abone olduğun duyuru kanallarını görmek ve değiştirmek için istediğin zaman /ayarla yazabilirsin."
 
     @classmethod
     def ayarla_start(cls):
@@ -72,8 +72,8 @@ class message_texts:
     @staticmethod
     def invalid_response_use_keyboard():
         return choice([
-            "Lütfen açılan özel klavyeyi kullan.",
-            "Cevabı kendin yazmak yerine açılan özel klavyeyi kullanmalısın."
+            "Lütfen açılan özel klavyedeki seçenekleri kullan.",
+            "Cevabı kendin yazmak yerine açılan özel klavyedeki seçeneklerden seçmelisin."
         ])
 
     @staticmethod
@@ -85,5 +85,5 @@ class message_texts:
         ])
 
     @staticmethod
-    def could_not_understand_msg():
-        return "?"
+    def oops():
+        return "Amanın! Az önce ne oldu öyle?"
