@@ -38,7 +38,7 @@ def import_special_channels():
         csv_reader = csv.reader(f)
         for row in csv_reader:
             print("add")
-            dbsvc["channels"].insert(row[0], 3, [])
+            dbsvc["channels"].insert(row[0], 3, None)
             i += 1
     print(f"added {i} records")
     print("end")
@@ -60,23 +60,23 @@ def generate_channels():
     if len(faculties) != len(set(faculties)):
         pprint(faculties)
         pprint(set(faculties))
-        raise Exception("Faculty names aren't unique")
+        raise Exception("Faculty names aren't unique!")
     if len(departments) != len(set(departments)):
         pprint(departments)
         pprint(set(departments))
-        raise Exception("Department names aren't unique")
+        raise Exception("Department names aren't unique!")
 
     print("start")
     i = 0
 
-    for faculty in dbsvc["faculties"].get():
+    for faculty in dbsvc["faculties"].getall():
         if faculty["name"] in departments:
             faculty["name"] += " (Fakülte)"
         print("add")
         dbsvc["channels"].insert(faculty["name"], 1, faculty["id"])
         i += 1
 
-    for department in dbsvc["departments"].get():
+    for department in dbsvc["departments"].getall():
         if department["name"] in faculties:
             department["name"] += " (Bölüm)"
         print("add")
@@ -93,7 +93,7 @@ def reset_last_announcement_ids():
     print("end")
 
 
-def check_and_handle_new_announcements(bot, dbsvc, item_type):
+def check_and_handle_new_announcements(item_type):
     from tgbots.kto_karatay_duyuru_bot.scraping import get_new_announcements, MSG_FORMAT
     from tgbots.kto_karatay_duyuru_bot.helpers import get_subscribed_users_ids
 
@@ -106,8 +106,14 @@ def check_and_handle_new_announcements(bot, dbsvc, item_type):
         subscribed_users_ids = get_subscribed_users_ids(dbsvc, item_channel["id"])
         for user_id in subscribed_users_ids:
             for announcement in item_announcements:
-                bot.api.send_message(
-                    user_id,
+                user = dbsvc["users"].getbyid(user_id)
+                if not user:
+                    # Muhtemelen önceki mesajı gönderirken bu kullanıcının botu sildiğini fark ettik
+                    break
+                chat_id = user["chat_id"]
+                print(f"sending message to {chat_id}")
+                bot.send_message(
+                    chat_id,
                     MSG_FORMAT.format(
                         channel_name=bot.api.escape_mdv2(item_channel["name"]),
                         announcement_date=bot.api.escape_mdv2(announcement['date'].strftime('%d.%m.%Y')),
@@ -136,8 +142,8 @@ def main(argv):
             print("ERROR:")
             pprint(r)
     elif cmd == "init_db":
-        print("- import sql: mysql -p < misc/mysql_schema.sql")
-        print("do this, then press 'enter'")
+        print("mysql -p < misc/mysql_schema.sql")
+        print("Do this, then press 'Enter': ")
         input()
         import_faculties()
         import_departments()
@@ -146,8 +152,8 @@ def main(argv):
     elif cmd == "reset_last_announcement_ids":
         reset_last_announcement_ids()
     elif cmd == "cron_tasks":
-        check_and_handle_new_announcements(bot, dbsvc, "faculty")
-        check_and_handle_new_announcements(bot, dbsvc, "department")
+        check_and_handle_new_announcements("faculty")
+        check_and_handle_new_announcements("department")
     else:
         print("ERROR: Given command doesn't exist.")
 

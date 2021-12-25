@@ -34,7 +34,7 @@ def get_announcements(item_type, item_code):
             "title": announcement_title,
             "url": announcement_url
         })
-    print(len(r), "unfiltered")
+    print(f"{len(r)} unfiltered")
     return r
 
 
