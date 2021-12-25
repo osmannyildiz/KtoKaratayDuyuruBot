@@ -1,11 +1,8 @@
-# DEV CONFIG
-bot_config = {
-    "TOKEN": ""
+from dotenv import load_dotenv
+load_dotenv()
+from os import environ as env
+
+
+BOT_CONFIG = {
+    "token": env.get("BOT_TOKEN")
 }
-
-
-# OVERRIDE WITH PROD CONFIG IF AVAILABLE
-try:
-    from tgbots.kto_karatay_duyuru_bot.config_prod import *
-except ImportError:
-    pass

@@ -1,6 +1,6 @@
 import sys
 import csv
-from tgbots.kto_karatay_duyuru_bot.main import bot
+from tgbots.kto_karatay_duyuru_bot.bot import bot
 from tgbots.kto_karatay_duyuru_bot.db import dbsvc
 from pprint import pprint
 
@@ -38,7 +38,7 @@ def import_special_channels():
         csv_reader = csv.reader(f)
         for row in csv_reader:
             print("add")
-            dbsvc["channels"].insert(row[0], 3, None)
+            dbsvc["channels"].insert(row[0], 3, [])
             i += 1
     print(f"added {i} records")
     print("end")
@@ -89,7 +89,7 @@ def generate_channels():
 
 def reset_last_announcement_ids():
     print("start")
-    dbsvc["channels"].update("last_announcement_id=NULL", None, "true", None)
+    dbsvc["channels"].update("last_announcement_id=NULL", [], "true", [])
     print("end")
 
 
@@ -103,7 +103,7 @@ def check_and_handle_new_announcements(bot, dbsvc, item_type):
             item_channel = dbsvc["channels"].getone("item_type=%s AND item_id=%s", [1, item_id])
         elif item_type == "department":
             item_channel = dbsvc["channels"].getone("item_type=%s AND item_id=%s", [2, item_id])
-        subscribed_users_ids = get_subscribed_users_ids(bot, item_channel["id"])
+        subscribed_users_ids = get_subscribed_users_ids(dbsvc, item_channel["id"])
         for user_id in subscribed_users_ids:
             for announcement in item_announcements:
                 bot.api.send_message(
@@ -120,34 +120,36 @@ def check_and_handle_new_announcements(bot, dbsvc, item_type):
 
 
 def main(argv):
-    arg1 = argv[1]
-    if arg1 == "import_faculties":
-        import_faculties()
-    elif arg1 == "import_departments":
-        import_departments()
-    elif arg1 == "import_special_channels":
-        import_special_channels()
-    elif arg1 == "generate_channels":
-        generate_channels()
-    elif arg1 == "init_db":
-        # print("- enter mysql shell: mysql -p")
-        # print("- drop database (if exists): DROP DATABASE kkdb;")
-        # print("- create database: CREATE DATABASE kkdb;")
-        # print("- exit mysql shell: exit")
-        print('- import sql: mysql -p kkdb < "independent study.sql"')
-        print("if you haven't done these, press 'ctrl+c'. else, press 'enter'")
+    cmd = argv[1]
+    if cmd == "set_webhook":
+        ok, r = bot.api.set_webhook(argv[2])
+        if ok:
+            print("OK")
+        else:
+            print("ERROR:")
+            pprint(r)
+    elif cmd == "delete_webhook":
+        ok, r = bot.api.delete_webhook()
+        if ok:
+            print("OK")
+        else:
+            print("ERROR:")
+            pprint(r)
+    elif cmd == "init_db":
+        print("- import sql: mysql -p < misc/mysql_schema.sql")
+        print("do this, then press 'enter'")
         input()
         import_faculties()
         import_departments()
         generate_channels()
         import_special_channels()
-    elif arg1 == "reset_last_announcement_ids":
+    elif cmd == "reset_last_announcement_ids":
         reset_last_announcement_ids()
-    elif arg1 == "cron_tasks":
+    elif cmd == "cron_tasks":
         check_and_handle_new_announcements(bot, dbsvc, "faculty")
         check_and_handle_new_announcements(bot, dbsvc, "department")
     else:
-        print("error: arg1")
+        print("ERROR: Given command doesn't exist.")
 
 
 if __name__ == "__main__":
