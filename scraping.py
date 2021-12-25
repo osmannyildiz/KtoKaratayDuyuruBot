@@ -1,7 +1,7 @@
+from tgbots.kto_karatay_duyuru_bot.helpers import parse_string_to_date
 import requests
 from bs4 import BeautifulSoup
 from datetime import date, timedelta
-from tgbots.kto_karatay_duyuru_bot.helpers import parse_string_to_date
 
 
 BASE_URL = "https://www.karatay.edu.tr/"
@@ -40,9 +40,9 @@ def get_announcements(item_type, item_code):
 
 def get_new_announcements(dbsvc, item_type):
     if item_type == "faculty":
-        items = dbsvc["faculties"].get()
+        items = dbsvc["faculties"].getall()
     elif item_type == "department":
-        items = dbsvc["departments"].get()
+        items = dbsvc["departments"].getall()
     r = {}
     for item in items:
         if item_type == "faculty":
@@ -58,5 +58,5 @@ def get_new_announcements(dbsvc, item_type):
         if item_announcements:
             r[item["id"]] = item_announcements
             new_item_channel_last_announcement_id = max([announcement["id"] for announcement in item_announcements])
-            dbsvc["channels"].update_column_with_value("last_announcement_id", new_item_channel_last_announcement_id, "id=%s", item_channel["id"])
+            dbsvc["channels"].update_column_with_value("last_announcement_id", new_item_channel_last_announcement_id, "id=%s", [item_channel["id"]])
     return r

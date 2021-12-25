@@ -1,6 +1,6 @@
-from datetime import date
-from tgbots.kto_karatay_duyuru_bot.message_texts import message_texts as mt
+from tgbots.kto_karatay_duyuru_bot.message_texts import MessageTexts as MT
 from tgbots.kto_karatay_duyuru_bot.db import dbsvc
+from datetime import date
 
 
 def build_custom_kb_of_faculties(bot):
@@ -18,7 +18,7 @@ def build_custom_kb_of_departments(bot, faculty_id):
 def build_custom_kb_for_ayarla(bot, user_id):
     subscribed_channels_of_user = [subscription["channel_id"] for subscription in dbsvc["subscriptions"].get("user_id=%s", [user_id])]
     list_for_custom_kb = []
-    list_for_custom_kb.append(mt.ayarla_done_button())
+    list_for_custom_kb.append(MT.ayarla_done_button())
     for channel in dbsvc["channels"].get():
         if channel["id"] in subscribed_channels_of_user:
             list_for_custom_kb.append(channel["name"] + " ✅")
@@ -30,7 +30,7 @@ def build_custom_kb_for_ayarla(bot, user_id):
 def build_custom_kb_for_curr_state(bot, user_id, user_state=None):
     user = dbsvc["users"].getone("id=%s", [user_id])
 
-    if user_state == None:
+    if user_state is None:
         user_state = user["state"]
 
     if user_state == 2:

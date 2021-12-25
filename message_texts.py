@@ -1,7 +1,7 @@
 from random import choice
 
 
-class message_texts:
+class MessageTexts:
     @staticmethod
     def ask_name():
         return "Merhaba, ben KTO Karatay Duyuru Bot. Kısaca KKDB diyebilirsin.\nSenin ismin nedir?"
