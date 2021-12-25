@@ -3,20 +3,16 @@ from random import choice
 
 class MessageTexts:
     @staticmethod
-    def ask_name():
-        return "Merhaba, ben KTO Karatay Duyuru Bot. Kısaca KKDB diyebilirsin.\nSenin ismin nedir?"
-
-    @staticmethod
     def ask_faculty():
-        return "Güzel! Şimdi seni daha iyi tanımak için birkaç soru soracağım.\nÖncelikle, hangi fakültede okuyorsun?"
+        return "Merhaba, ben KTO Karatay Duyuru Bot. Kısaca KKDB diyebilirsin.\nŞimdi seni daha iyi tanımak için birkaç soru soracağım.\nÖncelikle, hangi fakültede okuyorsun?"
 
     @staticmethod
     def ask_department():
         return "Peki, bölümün nedir?"
 
     @staticmethod
-    def meeting_done(user_name):
-        return f"Tanıştığımıza memnun oldum, {user_name} 😊\n- Yeni bir duyuru yayınlandığında sana haber vereceğim, böylece hiçbir haberi kaçırmayacaksın.\n- İlgini çekeceğini düşündüğüm duyuru kanallarını senin için aktifleştirdim.\n- Abone olduğun duyuru kanallarını görmek ve değiştirmek için istediğin zaman /ayarla yazabilirsin."
+    def meeting_done():
+        return f"Tanıştığımıza memnun oldum 😊\n👉 Yeni bir duyuru yayınlandığında sana haber vereceğim, böylece hiçbir haberi kaçırmayacaksın.\n👉 İlgini çekeceğini düşündüğüm duyuru kanallarını senin için aktifleştirdim.\n👉 Abone olduğun duyuru kanallarını görmek ve değiştirmek için istediğin zaman /ayarla yazabilirsin."
 
     @classmethod
     def ayarla_start(cls):
@@ -61,13 +57,6 @@ class MessageTexts:
     @staticmethod
     def finish_cmd_first():
         return "Hey, öncelikle halihazırda devam eden işi tamamlamalısın!"
-
-    @staticmethod
-    def invalid_user_name():
-        return choice([
-            "İsmini doğru yazdığından emin misin? Eğer doğruysa, lütfen sadeleştirerek yazmayı dene.",
-            "İsmini doğru yazdığından emin misin? Eğer doğruysa, lütfen sadeleştirerek yazmayı dene. Veritabanım sana minnettar kalacak."
-        ])
 
     @staticmethod
     def invalid_response_use_keyboard():
