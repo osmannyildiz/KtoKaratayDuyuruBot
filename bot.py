@@ -27,6 +27,10 @@ class Bot(BaseBot):
     def handle_update(self, update):
         if msg := update.get("message"):
             self.handle_message(msg)
+        elif update.get("my_chat_member", dict()).get("new_chat_member", dict()).get("status") == "kicked":
+            # Kullanıcı botu sildi, sen de kullanıcıyı sil
+            chat_id = update["my_chat_member"]["chat"]["id"]
+            dbsvc["users"].delete("chat_id=%s", [chat_id])
         else:
             # FIXME Beklenmedik durum: Gelen olay mesaj değil
             pprint(update)
