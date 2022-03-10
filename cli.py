@@ -9,10 +9,9 @@ def import_faculties():
     print("start")
     i = 0
     with open("data/faculties.csv") as f:
-        csv_reader = csv.reader(f)
+        csv_reader = csv.DictReader(f)
         for row in csv_reader:
-            print("add")
-            dbsvc["faculties"].insert(*row)
+            dbsvc["faculties"].insert(row["name"], row["code"])
             i += 1
     print(f"added {i} records")
     print("end")
@@ -22,10 +21,9 @@ def import_departments():
     print("start")
     i = 0
     with open("data/departments.csv") as f:
-        csv_reader = csv.reader(f)
+        csv_reader = csv.DictReader(f)
         for row in csv_reader:
-            print("add")
-            dbsvc["departments"].insert(*row)
+            dbsvc["departments"].insert(row["faculty_id"], row["name"], row["code"])
             i += 1
     print(f"added {i} records")
     print("end")
@@ -35,10 +33,9 @@ def import_special_channels():
     print("start")
     i = 0
     with open("data/special_channels.csv") as f:
-        csv_reader = csv.reader(f)
+        csv_reader = csv.DictReader(f)
         for row in csv_reader:
-            print("add")
-            dbsvc["channels"].insert(row[0], 3, None)
+            dbsvc["channels"].insert(row["name"], 3, None)
             i += 1
     print(f"added {i} records")
     print("end")
@@ -72,14 +69,12 @@ def generate_channels():
     for faculty in dbsvc["faculties"].getall():
         if faculty["name"] in departments:
             faculty["name"] += " (Fakülte)"
-        print("add")
         dbsvc["channels"].insert(faculty["name"], 1, faculty["id"])
         i += 1
 
     for department in dbsvc["departments"].getall():
         if department["name"] in faculties:
             department["name"] += " (Bölüm)"
-        print("add")
         dbsvc["channels"].insert(department["name"], 2, department["id"])
         i += 1
 
