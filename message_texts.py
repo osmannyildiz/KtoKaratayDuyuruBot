@@ -3,8 +3,12 @@ from random import choice
 
 class MessageTexts:
     @staticmethod
+    def hello():
+        return "Merhaba, ben KTO Karatay Duyuru Bot. Kısaca KKDB diyebilirsin. 🤖\nŞimdi seni daha iyi tanımak için birkaç soru soracağım."
+
+    @staticmethod
     def ask_faculty():
-        return "Merhaba, ben KTO Karatay Duyuru Bot. Kısaca KKDB diyebilirsin.\nŞimdi seni daha iyi tanımak için birkaç soru soracağım.\nÖncelikle, hangi fakültede okuyorsun?"
+        return "Öncelikle, hangi fakültede okuyorsun?"
 
     @staticmethod
     def ask_department():
@@ -12,39 +16,31 @@ class MessageTexts:
 
     @staticmethod
     def meeting_done():
-        return f"Tanıştığımıza memnun oldum 😊\n👉 Yeni bir duyuru yayınlandığında sana haber vereceğim, böylece hiçbir haberi kaçırmayacaksın.\n👉 İlgini çekeceğini düşündüğüm duyuru kanallarını senin için aktifleştirdim.\n👉 Abone olduğun duyuru kanallarını görmek ve değiştirmek için istediğin zaman /ayarla yazabilirsin."
+        return f"Tanıştığımıza memnun oldum 😊\n\n📣 Yeni bir duyuru yayınlandığında sana hemen haber vereceğim, böylece hiçbir gelişmeyi kaçırmayacaksın.\n\n📣 İlgini çekeceğini düşündüğüm duyuru kanallarını senin için aktifleştirdim.\n\n📣 Abone olduğun duyuru kanallarını görmek ve değiştirmek için istediğin zaman mesaj kutusunun solundaki menüyü kullanabilirsin."
 
     @classmethod
-    def ayarla_start(cls):
-        return f'İşte tüm duyuru kanallarının listesi. İstediğin kanalları etkinleştirdikten/devre dışı bıraktıktan sonra listenin başındaki "{cls.ayarla_done_button()}" butonuna basabilirsin.'
+    def toggle_start(cls):
+        return f'İşte duyuru kanallarının listesi. İstediğin kanalları etkinleştirdikten/devre dışı bıraktıktan sonra listenin başındaki "{cls.toggle_done_button()}" seçeneğine basabilirsin.'
 
     @staticmethod
-    def ayarla_waiting():
+    def toggle_waiting():
         return "..."
 
     @staticmethod
-    def ayarla_done():
+    def toggle_done():
         return "Tamamdır, ayarlarını kaydettim."
 
     @staticmethod
-    def ayarla_done_button():
+    def toggle_done_button():
         return "Tamamla 👍"
 
     @staticmethod
-    def sifirla_start():
-        return 'Emin misin? Ayarların silinecek ve yeni duyuruları benden haber alamayacaksın.\nEğer eminsen "onayla" yaz.'
-
-    @staticmethod
-    def sifirla_done():
-        return "Tamam, seni unuttum.\nBelki bir gün tekrar tanışırız 🍀"
-
-    @staticmethod
-    def user_canceled_sifirla():
-        return "Sanırım sıfırlamaktan vazgeçtin.\nVazgeçmediysen tekrar /sifirla yazabilirsin."
+    def forget():
+        return 'Seni unutmamı ve yeni duyuruları haber vermememi istiyorsan sağ üstteki üç nokta menüsünden "Sohbeti sil (Delete chat)" seçeneğini kullanabilirsin.'
 
     @staticmethod
     def already_met():
-        return "Seninle tanışmıştık, hatırlıyorum 👋\nBaştan tanışmak istiyorsan /sifirla komutunu dene."
+        return "Seninle tanışmıştık, hatırlıyorum 👋"
 
     @staticmethod
     def not_met():
@@ -56,19 +52,19 @@ class MessageTexts:
 
     @staticmethod
     def finish_cmd_first():
-        return "Hey, öncelikle halihazırda devam eden işi tamamlamalısın!"
+        return "Hey, öncelikle halihazırda devam eden işi tamamlayalım!"
 
     @staticmethod
     def invalid_response_use_keyboard():
         return choice([
-            "Lütfen açılan özel klavyedeki seçenekleri kullan.",
-            "Cevabı kendin yazmak yerine açılan özel klavyedeki seçeneklerden seçmelisin."
+            "Lütfen açılan listedeki seçenekleri kullan.",
+            "Cevabı kendin yazmak yerine açılan listedeki seçeneklerden seçmelisin."
         ])
 
     @staticmethod
     def could_not_understand():
         return choice([
-            "Üzgünüm, seninle her konuda sohbet edebilecek kadar zeki değilim... Henüz 😉",
+            "Üzgünüm, seninle her konuda sohbet edebilecek kadar zeki değilim... Henüz 🦾😉",
             "Iıı şey... Bu konuda pek bir fikrim yok.",
             "Ne demek istediğini anlayamadım..."
         ])

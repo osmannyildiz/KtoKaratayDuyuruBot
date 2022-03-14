@@ -2,122 +2,139 @@ import sys
 import csv
 from tgbots.kto_karatay_duyuru_bot.bot import bot
 from tgbots.kto_karatay_duyuru_bot.db import dbsvc
+from tgbots.kto_karatay_duyuru_bot.config import MESSAGE_FORMAT
+from tgbots.kto_karatay_duyuru_bot.constants import ChannelTypes
+from tgbots.kto_karatay_duyuru_bot.models.channel_context import ChannelContext
+from tgbots.kto_karatay_duyuru_bot.announcements_services import WebsiteAnnouncementsService, WebsiteFacultyAnnouncementsService, WebsiteDepartmentAnnouncementsService
 from pprint import pprint
 
 
+channel_ctxs = [
+    ChannelContext(ChannelTypes.WEBSITE_FACULTY, WebsiteFacultyAnnouncementsService, dbsvc["faculties"]),
+    ChannelContext(ChannelTypes.WEBSITE_DEPARTMENT, WebsiteDepartmentAnnouncementsService, dbsvc["departments"]),
+    ChannelContext(ChannelTypes.WEBSITE_MISC, WebsiteAnnouncementsService)
+]
+
+
 def import_faculties():
-    print("start")
+    print("Importing faculties... ", end="")
     i = 0
     with open("data/faculties.csv") as f:
         csv_reader = csv.DictReader(f)
         for row in csv_reader:
             dbsvc["faculties"].insert(row["name"], row["code"])
             i += 1
-    print(f"added {i} records")
-    print("end")
+    print(f"Done. Added {i} faculties.")
 
 
 def import_departments():
-    print("start")
+    print("Importing departments... ", end="")
     i = 0
     with open("data/departments.csv") as f:
         csv_reader = csv.DictReader(f)
         for row in csv_reader:
-            dbsvc["departments"].insert(row["faculty_id"], row["name"], row["code"])
+            code = row["code"] if row["code"] else None
+            dbsvc["departments"].insert(row["faculty_id"], row["name"], code)
             i += 1
-    print(f"added {i} records")
-    print("end")
+    print(f"Done. Added {i} departments.")
 
 
-def import_special_channels():
-    print("start")
+def import_website_misc_channels():
+    print("Importing website misc channels... ", end="")
     i = 0
-    with open("data/special_channels.csv") as f:
+    with open("data/website_misc_channels.csv") as f:
         csv_reader = csv.DictReader(f)
         for row in csv_reader:
-            dbsvc["channels"].insert(row["name"], 3, None)
+            subscribe_by_default = True if row["subscribe_by_default"] == "true" else False
+            dbsvc["website_misc_channels"].insert(row["name"], row["url"], subscribe_by_default)
             i += 1
-    print(f"added {i} records")
-    print("end")
+    print(f"Done. Added {i} website misc channels.")
 
 
-def generate_channels():
+def import_kkdb_special_channels():
+    print("Importing KKDB special channels... ", end="")
+    i = 0
+    with open("data/kkdb_special_channels.csv") as f:
+        csv_reader = csv.DictReader(f)
+        for row in csv_reader:
+            subscribe_by_default = True if row["subscribe_by_default"] == "true" else False
+            dbsvc["kkdb_special_channels"].insert(row["name"], subscribe_by_default)
+            i += 1
+    print(f"Done. Added {i} KKDB special channels.")
+
+
+def generate_channels_for_faculties_and_departments():
     faculties = []
     with open("data/faculties.csv") as f:
-        csv_reader = csv.reader(f)
+        csv_reader = csv.DictReader(f)
         for row in csv_reader:
-            faculties.append(row[0])
+            faculties.append(row["name"])
 
     departments = []
     with open("data/departments.csv") as f:
-        csv_reader = csv.reader(f)
+        csv_reader = csv.DictReader(f)
         for row in csv_reader:
-            departments.append(row[1])
+            departments.append(row["name"])
 
     if len(faculties) != len(set(faculties)):
-        pprint(faculties)
-        pprint(set(faculties))
         raise Exception("Faculty names aren't unique!")
     if len(departments) != len(set(departments)):
-        pprint(departments)
-        pprint(set(departments))
         raise Exception("Department names aren't unique!")
 
-    print("start")
+    print("Generating channels for faculties... ", end="")
     i = 0
-
     for faculty in dbsvc["faculties"].getall():
         if faculty["name"] in departments:
             faculty["name"] += " (Fakülte)"
-        dbsvc["channels"].insert(faculty["name"], 1, faculty["id"])
+        dbsvc["website_faculty_channels"].insert(faculty["name"], faculty["id"])
         i += 1
+    print(f"Done. Added {i} faculty channels.")
 
+    print("Generating channels for departments... ", end="")
+    i = 0
     for department in dbsvc["departments"].getall():
         if department["name"] in faculties:
             department["name"] += " (Bölüm)"
-        dbsvc["channels"].insert(department["name"], 2, department["id"])
+        dbsvc["website_department_channels"].insert(department["name"], department["id"])
         i += 1
-
-    print(f"added {i} records")
-    print("end")
+    print(f"Done. Added {i} department channels.")
 
 
 def reset_last_announcement_ids():
-    print("start")
-    dbsvc["channels"].update("last_announcement_id=NULL", [], "true", [])
-    print("end")
+    print("Resetting last announcement ids of relevant channels... ", end="")
+    for channel_ctx in channel_ctxs:
+        channel_ctx.service.reset_last_announcement_ids()
+    print("Done.")
 
 
-def check_and_handle_new_announcements(item_type):
-    from tgbots.kto_karatay_duyuru_bot.scraping import get_new_announcements, MSG_FORMAT
-    from tgbots.kto_karatay_duyuru_bot.helpers import get_subscribed_users_ids
-
-    new_announcements = get_new_announcements(dbsvc, item_type)
-    for item_id, item_announcements in new_announcements.items():
-        if item_type == "faculty":
-            item_channel = dbsvc["channels"].getone("item_type=%s AND item_id=%s", [1, item_id])
-        elif item_type == "department":
-            item_channel = dbsvc["channels"].getone("item_type=%s AND item_id=%s", [2, item_id])
-        subscribed_users_ids = get_subscribed_users_ids(dbsvc, item_channel["id"])
-        for user_id in subscribed_users_ids:
-            for announcement in item_announcements:
-                user = dbsvc["users"].getbyid(user_id)
-                if not user:
-                    # Muhtemelen önceki mesajı gönderirken bu kullanıcının botu sildiğini fark ettik
-                    break
-                chat_id = user["chat_id"]
-                print(f"sending message to {chat_id}")
-                bot.send_message(
-                    chat_id,
-                    MSG_FORMAT.format(
-                        channel_name=bot.api.escape_mdv2(item_channel["name"]),
-                        announcement_date=bot.api.escape_mdv2(announcement['date'].strftime('%d.%m.%Y')),
-                        announcement_title=bot.api.escape_mdv2(announcement['title']),
-                        announcement_url=announcement['url']
-                    ),
-                    parse_mode="MarkdownV2",
-                    disable_preview=True
-                )
+def check_and_handle_new_announcements():
+    for channel_ctx in channel_ctxs:
+        new_announcements = channel_ctx.service.get_new_announcements_of_all_channels()
+        for channel_id, channel_announcements in new_announcements.items():
+            channel = channel_ctx.dbsvc_channels.getbyid(channel_id)
+            subscribed_users_ids = (
+                subscription["user_id"]
+                for subscription in channel_ctx.dbsvc_subscriptions.get("channel_id=%s", [channel["id"]])
+            )
+            for user_id in subscribed_users_ids:
+                for announcement in channel_announcements:
+                    user = dbsvc["users"].getbyid(user_id)
+                    if not user:
+                        # Muhtemelen önceki mesajı gönderirken bu kullanıcının botu sildiğini fark ettik
+                        break
+                    chat_id = user["chat_id"]
+                    print(f"sending message to {chat_id}")
+                    bot.send_message(
+                        chat_id,
+                        MESSAGE_FORMAT.format(
+                            channel_name=bot.api.escape_mdv2(channel["name"]),
+                            announcement_date=bot.api.escape_mdv2(announcement.date.strftime('%d.%m.%Y')),
+                            announcement_title=bot.api.escape_mdv2(announcement.title),
+                            announcement_url=announcement.url
+                        ),
+                        parse_mode="MarkdownV2",
+                        disable_preview=True
+                    )
 
 
 def main(argv):
@@ -142,13 +159,13 @@ def main(argv):
         input()
         import_faculties()
         import_departments()
-        generate_channels()
-        import_special_channels()
+        generate_channels_for_faculties_and_departments()
+        import_website_misc_channels()
+        import_kkdb_special_channels()
     elif cmd == "reset_last_announcement_ids":
         reset_last_announcement_ids()
     elif cmd == "cron_tasks":
-        check_and_handle_new_announcements("faculty")
-        check_and_handle_new_announcements("department")
+        check_and_handle_new_announcements()
     else:
         print("ERROR: Given command doesn't exist.")
 
