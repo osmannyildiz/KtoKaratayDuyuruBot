@@ -17,7 +17,7 @@ channel_ctxs = [
 
 
 def import_faculties():
-    print("Importing faculties... ", end="")
+    print("Importing faculties...\t", end="")
     i = 0
     with open("data/faculties.csv") as f:
         csv_reader = csv.DictReader(f)
@@ -28,7 +28,7 @@ def import_faculties():
 
 
 def import_departments():
-    print("Importing departments... ", end="")
+    print("Importing departments...\t", end="")
     i = 0
     with open("data/departments.csv") as f:
         csv_reader = csv.DictReader(f)
@@ -40,7 +40,7 @@ def import_departments():
 
 
 def import_website_misc_channels():
-    print("Importing website misc channels... ", end="")
+    print("Importing website misc channels...\t", end="")
     i = 0
     with open("data/website_misc_channels.csv") as f:
         csv_reader = csv.DictReader(f)
@@ -52,7 +52,7 @@ def import_website_misc_channels():
 
 
 def import_kkdb_special_channels():
-    print("Importing KKDB special channels... ", end="")
+    print("Importing KKDB special channels...\t", end="")
     i = 0
     with open("data/kkdb_special_channels.csv") as f:
         csv_reader = csv.DictReader(f)
@@ -81,7 +81,7 @@ def generate_channels_for_faculties_and_departments():
     if len(departments) != len(set(departments)):
         raise Exception("Department names aren't unique!")
 
-    print("Generating channels for faculties... ", end="")
+    print("Generating channels for faculties...\t", end="")
     i = 0
     for faculty in dbsvc["faculties"].getall():
         if faculty["name"] in departments:
@@ -90,7 +90,7 @@ def generate_channels_for_faculties_and_departments():
         i += 1
     print(f"Done. Added {i} faculty channels.")
 
-    print("Generating channels for departments... ", end="")
+    print("Generating channels for departments...\t", end="")
     i = 0
     for department in dbsvc["departments"].getall():
         if department["name"] in faculties:
@@ -101,7 +101,7 @@ def generate_channels_for_faculties_and_departments():
 
 
 def reset_last_announcement_ids():
-    print("Resetting last announcement ids of relevant channels... ", end="")
+    print("Resetting last announcement ids of relevant channels...\t", end="")
     for channel_ctx in channel_ctxs:
         channel_ctx.service.reset_last_announcement_ids()
     print("Done.")
@@ -154,9 +154,8 @@ def main(argv):
             print("ERROR:")
             pprint(r)
     elif cmd == "init_db":
-        print("mysql -p < misc/mysql_schema.sql")
-        print("Do this, then press 'Enter': ")
-        input()
+        print("$ mysql -u mydbuser -p < misc/mysql_schema.sql")
+        input("Do this, then press 'Enter': ")
         import_faculties()
         import_departments()
         generate_channels_for_faculties_and_departments()
