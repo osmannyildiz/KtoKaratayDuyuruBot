@@ -1,4 +1,9 @@
-# tgbot
-# dbpkg
 python-dotenv
 bs4
+
+# Requirements for tgbot
+requests
+
+# Requirements for dbpkg
+mysql-connector-python
+
