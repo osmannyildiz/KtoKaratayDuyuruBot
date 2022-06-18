@@ -42,6 +42,7 @@ CREATE TABLE website_faculty_channels (
 	name					VARCHAR(255)	NOT NULL,
 	faculty_id				INT				NOT NULL,
 	last_announcement_id	INT				DEFAULT NULL,
+	disable_website_check	BOOLEAN			NOT NULL DEFAULT false,
 	PRIMARY KEY (id),
 	FOREIGN KEY (faculty_id) REFERENCES faculties(id)
 );
@@ -51,6 +52,7 @@ CREATE TABLE website_department_channels (
 	name					VARCHAR(255)	NOT NULL,
 	department_id			INT				NOT NULL,
 	last_announcement_id	INT				DEFAULT NULL,
+	disable_website_check	BOOLEAN			NOT NULL DEFAULT false,
 	PRIMARY KEY (id),
 	FOREIGN KEY (department_id) REFERENCES departments(id)
 );
@@ -61,6 +63,7 @@ CREATE TABLE website_misc_channels (
 	url						VARCHAR(255)	NOT NULL,
 	last_announcement_id	INT				DEFAULT NULL,
 	subscribe_by_default	BOOLEAN			NOT NULL DEFAULT false,
+	disable_website_check	BOOLEAN			NOT NULL DEFAULT false,
 	PRIMARY KEY (id)
 );
 

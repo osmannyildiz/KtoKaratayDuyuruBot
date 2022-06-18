@@ -18,7 +18,11 @@ class WebsiteAnnouncementsService:
         self.dbsvc_channels.update_column_with_value("last_announcement_id", None, "true", [])
 
     def get_announcements_of_channel(self, channel):
+        if channel.get("disable_website_check"):
+            return []
+
         announcements = []
+
         source_url = self.get_source_url_of_channel(channel)
         if source_url:
             resp = requests.get(source_url)
@@ -37,32 +41,34 @@ class WebsiteAnnouncementsService:
                     announcement_title,
                     announcement_url
                 ))
+
         return announcements
 
-    def get_recent_announcements_of_channel(self, channel):
+    def get_new_announcements_of_channel(self, channel):
         announcements = self.get_announcements_of_channel(channel)
-        announcements = list(filter(
-            lambda announcement: announcement.date > OLDEST_ANNOUNCEMENT_DATE,
-            announcements
-        ))
-        return announcements
 
-    def get_new_announcements_of_all_channels(self):
-        announcements_of_channels = {}
-        channels = self.dbsvc_channels.getall()
-        for channel in channels:
-            announcements = self.get_recent_announcements_of_channel(channel)
-            if channel["last_announcement_id"]:
-                announcements = list(filter(
-                    lambda announcement: announcement.id > channel["last_announcement_id"],
-                    announcements
-                ))
-            if announcements:
-                announcements_of_channels[channel["id"]] = announcements
-                last_announcement_id = max([announcement.id for announcement in announcements], default=None)
-                if last_announcement_id:
-                    self.dbsvc_channels.update_column_with_value("last_announcement_id", last_announcement_id, "id=%s", [channel["id"]])
-        return announcements_of_channels
+        # Filter for oldest announcement date
+        announcements = [
+            announcement
+            for announcement in announcements
+            if announcement.date > OLDEST_ANNOUNCEMENT_DATE
+        ]
+
+        # Filter for last announcement id
+        if channel["last_announcement_id"]:
+            announcements = [
+                announcement
+                for announcement in announcements
+                if announcement.id > channel["last_announcement_id"]
+            ]
+
+        # Update last announcement id
+        if announcements:
+            last_announcement_id = max([announcement.id for announcement in announcements], default=None)
+            if last_announcement_id:
+                self.dbsvc_channels.update_column_with_value("last_announcement_id", last_announcement_id, "id=%s", [channel["id"]])
+
+        return announcements
 
 
 class WebsiteFacultyAnnouncementsService(WebsiteAnnouncementsService):

@@ -5,8 +5,8 @@ from datetime import date, timedelta
 
 
 BOT_CONFIG = {
-    "token": env.get("BOT_TOKEN")
+    "token": env.get("KKDB_BOT_TOKEN")
 }
 
-OLDEST_ANNOUNCEMENT_DATE = date.today() - timedelta(days=45)
+OLDEST_ANNOUNCEMENT_DATE = date.today() - timedelta(days=15)
 MESSAGE_FORMAT = "📣 {channel_name} — {announcement_date}\n*{announcement_title}*\n[Duyuruya git]({announcement_url})"
