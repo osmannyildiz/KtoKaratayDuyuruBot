@@ -146,4 +146,5 @@ cython_debug/
 
 
 _gitignored/
+logs/
 
