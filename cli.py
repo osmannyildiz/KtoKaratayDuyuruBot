@@ -176,7 +176,15 @@ def disable_website_check_for_website_channels_with_no_subscribers():  # haha ;D
 
 def main(argv):
     cmd = argv[1]
-    if cmd == "set_webhook":
+    if cmd == "get_webhook":
+        ok, r = bot.api.get_webhook_info()
+        if ok:
+            print("OK")
+            pprint(r["result"])
+        else:
+            print("ERROR:")
+            pprint(r)
+    elif cmd == "set_webhook":
         ok, r = bot.api.set_webhook(argv[2])
         if ok:
             print("OK")
