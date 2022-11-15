@@ -163,7 +163,9 @@ def disable_website_check_for_website_channels_with_no_subscribers():  # haha ;D
 
     i = 0
     for channel_group_ctx in website_channel_group_ctxs:
-        for channel in channel_group_ctx.dbsvc_channels.getall():
+        for channel in channel_group_ctx.dbsvc_channels.getall("disable_website_check=false", []):
+            # if channel["disable_website_check"]:
+            #     continue
             any_subscription = channel_group_ctx.dbsvc_subscriptions.getone("channel_id=%s", [channel["id"]])
             if not any_subscription:
                 channel_group_ctx.dbsvc_channels.update_column_with_value("disable_website_check", True, "id=%s", [channel["id"]])
