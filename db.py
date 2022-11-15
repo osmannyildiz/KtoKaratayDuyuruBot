@@ -1,5 +1,5 @@
 from dbpkg.service import DbTableServiceBase
-from dbpkg.mysql import create_dbconn
+from dbpkg.databases.mysql import create_dbconn
 
 
 class DbFacultiesService(DbTableServiceBase):
