@@ -28,19 +28,23 @@ class WebsiteAnnouncementsService:
             resp = requests.get(source_url)
             soup = BeautifulSoup(resp.text, "html.parser")
             els_announcement = soup.select(".postcontent tr")
-            els_announcement.pop(0)  # Table header
-            for el_announcement in els_announcement:
-                announcement_date = el_announcement.select("td:nth-child(1) a")[0].string.strip()
-                el_announcement_link = el_announcement.select("td:nth-child(2) a")[0]
-                announcement_id = int(el_announcement_link["href"].split("/")[-1][:-5])
-                announcement_title = el_announcement_link.string.strip()
-                announcement_url = self.base_url + el_announcement_link["href"]
-                announcements.append(WebsiteAnnouncement(
-                    announcement_id,
-                    parse_string_to_date(announcement_date),
-                    announcement_title,
-                    announcement_url
-                ))
+            if els_announcement:
+                els_announcement.pop(0)  # Table header
+                for el_announcement in els_announcement:
+                    announcement_date = el_announcement.select("td:nth-child(1) a")[0].string.strip()
+                    el_announcement_link = el_announcement.select("td:nth-child(2) a")[0]
+                    announcement_id = int(el_announcement_link["href"].split("/")[-1][:-5])
+                    announcement_title = el_announcement_link.string.strip()
+                    announcement_url = self.base_url + el_announcement_link["href"]
+                    announcements.append(WebsiteAnnouncement(
+                        announcement_id,
+                        parse_string_to_date(announcement_date),
+                        announcement_title,
+                        announcement_url
+                    ))
+            else:
+                # TODO Something is wrong, record debug info and notify me
+                pass
 
         return announcements
 
